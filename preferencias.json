@@ -1,0 +1,17 @@
+{
+    "Back_Home": {
+        "odd_min": 1.2,
+        "odd_max": 6.78,
+        "ligas": []
+    },
+    "Back_Draw": {
+        "odd_min": 1.2,
+        "odd_max": 5.14,
+        "ligas": []
+    },
+    "Back_Away": {
+        "odd_min": 1.2,
+        "odd_max": 4.11,
+        "ligas": []
+    }
+}
