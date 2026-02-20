@@ -64,12 +64,12 @@ def remover_duplicatas_drop_reset_index(df):
 # ==================== CARREGAMENTO INICIAL DE DADOS ===========================
 
 # Esse url e apenas para teste
-url_jogos_dia = r"C:\Users\SIDNEI\Desktop\meu_app_futebol\Base_de_Dados_Teste_com_Variaveis.csv"
+url_jogos_dia = "https://drive.google.com/uc?export=download&id=1UTw3M68fBTT53auoK9q71ALIsOFambQB"
 # Carregar jogos do dia
 # url_jogos_dia = r"C:\Users\SIDNEI\Desktop\meu_app_futebol\Jogos_do_Dia_Teste_com_Variaveis.csv"
 jogos_do_dia = pd.read_csv(url_jogos_dia)
 
-url_base_dados = r"C:\Users\SIDNEI\Desktop\meu_app_futebol\Base_de_Dados_Teste_com_Variaveis.csv"
+url_base_dados = "https://drive.google.com/uc?export=download&id=1qjRFmREyJ7LJxqWmGho_Ct71hywHDOb0"
 base = pd.read_csv(url_base_dados)
 
 # ==========================================================
@@ -514,4 +514,5 @@ if ATUALIZAR:
 
 
 # url_base_dados = r"C:\Users\SIDNEI\Desktop\Meus Projectos Jupyter\Pycaret nas apostas\Testando_novo_versao_treino_previsao\Meu_APP_V1\Base_de_Dados_Teste_com_Variaveis.csv"
+
 # base_dados = pd.read_csv(url_base_dados)
