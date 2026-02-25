@@ -484,10 +484,10 @@ print("Targets e Profits criados")
 
 
 # ##############################################################
-display(df_historico_final)
+# display(df_historico_final)
 
 print(f"\nJogos do Dia com as variáveis calculadas:")
-display(df_jogos_dia_final)
+# display(df_jogos_dia_final)
 
 # ======================================================================
 
@@ -1000,6 +1000,7 @@ if ATUALIZAR:
 # url_base_dados = r"C:\Users\SIDNEI\Desktop\Meus Projectos Jupyter\Pycaret nas apostas\Testando_novo_versao_treino_previsao\Meu_APP_V1\Base_de_Dados_Teste_com_Variaveis.csv"
 
 # base_dados = pd.read_csv(url_base_dados)
+
 
 
 
