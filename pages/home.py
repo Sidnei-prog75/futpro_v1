@@ -7,6 +7,490 @@ from pycaret.classification import load_model, predict_model
 
 st.title("Pagina Inicial")
 
+# ======================================================================
+# CODIGO WEB SCRAPING E CRIAÇÃO DE VARIAVEIS
+# ======================================================================
+#=========================== IMPORTAR BASE DE DADOS E JOGOS FUTUROS  =============
+# função para renomeação de ligas
+
+def rename_leagues(df):
+
+    df = df.copy()
+    mapping = {
+        'E0':'ENGLAND 1',
+        'E1':'ENGLAND 2',
+        'E2':'ENGLAND 3',
+        'E3':'ENGLAND 4',
+        'SC0':'ESCOCIA 1',
+        'SC1':'ESCOCIA 2',
+        'SC2':'ESCOCIA 3',
+        'D1':'ALEMANHA 1',
+        'D2':'ALEMANHA 2',
+        'I1':'ITALIA 1',
+        'I2':'ITALIA 2',
+        'SP1':'ESPANHA 1',
+        'SP2':'ESPANHA 2',
+        'F1':'FRANÇA 1',
+        'F2':'FRANÇA 2',
+        'N1':'HOLANDA 1',
+        'B1':'BELGICA 1',
+        'P':'PORTUGAL 1',
+        'T1':'TURQUIA 1',
+        'G1':'GRECIA 1'
+    }
+
+    df['League'] = df['League'].replace(mapping)
+    return df
+
+# =========================
+# Importar base de dados
+
+import pandas as pd
+import requests
+from io import StringIO
+from datetime import datetime
+
+# =====================================
+# CONFIGURAÇÃO
+# =====================================
+
+# lista de ligas
+ligas = [
+    'E0','E1','E2','E3','SC0','SC1','SC2',
+    'D1','D2','I1','I2','SP1','SP2',
+    'F1','F2','N1','B1','P','T1','G1'
+]
+
+# quantidade de temporadas desejadas
+quantidade_temporadas = 12
+
+base_url = "https://www.football-data.co.uk/mmz4281"
+
+# =====================================
+# GERAR TEMPORADAS AUTOMATICAMENTE
+# =====================================
+
+ano_atual = datetime.now().year
+ano_inicial = ano_atual - quantidade_temporadas
+
+temporadas = []
+
+for ano in range(ano_inicial, ano_atual):
+    temporada = f"{str(ano)[-2:]}{str(ano+1)[-2:]}"
+    temporadas.append(temporada)
+
+print("Temporadas geradas:", temporadas)
+
+# =====================================
+# WEB SCRAPING
+# =====================================
+
+lista_dfs = []
+
+for liga in ligas:
+    for temporada in temporadas:
+        url = f"{base_url}/{temporada}/{liga}.csv"
+
+        try:
+            resposta = requests.get(url, timeout=20)
+
+            # ignora temporada inexistente
+            if resposta.status_code != 200:
+                print(f"Não existe → {liga} {temporada}")
+                continue
+
+            print(f"Baixando → {liga} {temporada}")
+
+            df = pd.read_csv(StringIO(resposta.text))
+            df["Temporada"] = temporada
+            df["Liga"] = liga
+
+            lista_dfs.append(df)
+
+        except Exception as erro:
+            print(f"Erro {liga} {temporada}: {erro}")
+
+# =====================================
+# CONCATENAR E SALVAR
+# =====================================
+
+if lista_dfs:
+    df_final = pd.concat(lista_dfs, ignore_index=True)
+    #df_final.to_csv("dados_football_data.csv", index=False)
+    print("Shape final:", df_final.shape)
+else:
+    print("Nenhum dado encontrado")
+
+
+# =============
+
+df = df_final.copy()
+
+priority = {
+    'H': ['PSH', 'B365H', 'BWH', 'AvgH', 'IWH', 'WHH', 'VCH', 'MaxH', 'MinH'],
+    'D': ['PSD', 'B365D', 'BWD', 'AvgD', 'IWD', 'WHD', 'VCD', 'MaxD', 'MinD'],
+    'A': ['PSA', 'B365A', 'BWA', 'AvgA', 'IWA', 'WHA', 'VCA', 'MaxA', 'MinA']
+}
+
+# função para pegar apenas colunas existentes
+def cols_existentes(cols):
+    return [c for c in cols if c in df.columns]
+
+# converter odds existentes
+odds_cols = [c for cols in priority.values() for c in cols if c in df.columns]
+
+df[odds_cols] = (
+    df[odds_cols]
+    .replace(',', '.', regex=True)
+    .apply(pd.to_numeric, errors='coerce')
+)
+
+# fallback seguro
+df['Odd_H'] = df[cols_existentes(priority['H'])].bfill(axis=1).iloc[:, 0]
+df['Odd_D'] = df[cols_existentes(priority['D'])].bfill(axis=1).iloc[:, 0]
+df['Odd_A'] = df[cols_existentes(priority['A'])].bfill(axis=1).iloc[:, 0]
+
+base = df
+
+print("Fallback de odds aplicado com sucesso.")
+
+base = base[['Date','Liga','HomeTeam','AwayTeam','FTHG','FTAG','Odd_H','Odd_D','Odd_A']]
+base.columns = ['Date','League','Home','Away','Goals_H_FT','Goals_A_FT','Odd_H_FT','Odd_D_FT','Odd_A_FT']
+
+
+base = rename_leagues(base)
+
+#================ IMPORTAR JOGOS DO DIA ========
+
+
+import pandas as pd
+
+url = "https://www.football-data.co.uk/fixtures.csv"
+
+# Carregar csv diretamente do site
+jogos = pd.read_csv(url)
+
+
+
+
+df = jogos.copy()
+
+priority = {
+    'H': ['PSH', 'B365H', 'BWH', 'AvgH', 'IWH', 'WHH', 'VCH', 'MaxH', 'MinH'],
+    'D': ['PSD', 'B365D', 'BWD', 'AvgD', 'IWD', 'WHD', 'VCD', 'MaxD', 'MinD'],
+    'A': ['PSA', 'B365A', 'BWA', 'AvgA', 'IWA', 'WHA', 'VCA', 'MaxA', 'MinA']
+}
+
+# função para pegar apenas colunas existentes
+def cols_existentes(cols):
+    return [c for c in cols if c in df.columns]
+
+# converter odds existentes
+odds_cols = [c for cols in priority.values() for c in cols if c in df.columns]
+
+df[odds_cols] = (
+    df[odds_cols]
+    .replace(',', '.', regex=True)
+    .apply(pd.to_numeric, errors='coerce')
+)
+
+# fallback seguro
+df['Odd_H'] = df[cols_existentes(priority['H'])].bfill(axis=1).iloc[:, 0]
+df['Odd_D'] = df[cols_existentes(priority['D'])].bfill(axis=1).iloc[:, 0]
+df['Odd_A'] = df[cols_existentes(priority['A'])].bfill(axis=1).iloc[:, 0]
+
+jogos = df
+
+print("Fallback de odds aplicado com sucesso.")
+
+
+jogos = jogos[['Date','Time','Div','HomeTeam','AwayTeam','Odd_H','Odd_D','Odd_A']]
+jogos.columns = ['Date','Time','League','Home','Away','Odd_H_FT','Odd_D_FT','Odd_A_FT']
+
+jogos = rename_leagues(jogos)
+
+
+# ============ CRIAÇÃO DE VARIÁVEIS  ===========
+
+Base_de_Dados_FlashScore = base
+Jogos_do_Dia_FlashScore = jogos
+
+import pandas as pd
+import numpy as np
+from datetime import date, timedelta
+
+pd.set_option('display.max_columns', None)
+
+def drop_reset_index(df):
+    df = df.dropna()
+    df = df.reset_index(drop=True)
+    df.index += 1
+    return df
+
+# Opções: [5], [10], ou [5, 10] para ambos
+PERIODOS_ANALISE = [3, 5, 10]
+
+leagues = ['ENGLAND 1','ENGLAND 2','ENGLAND 3','ENGLAND 4',
+    'ESCOCIA 1','ESCOCIA 2','ESCOCIA 3',
+    'ALEMANHA 1','ALEMANHA 2',
+    'ITALIA 1','ITALIA 2',
+    'ESPANHA 1','ESPANHA 2',
+    'FRANÇA 1','FRANÇA 2',
+    'HOLANDA 1','BELGICA 1','PORTUGAL 1','TURQUIA 1','GRECIA 1'
+]
+
+# ========== CARREGAMENTO DOS DADOS ==========
+# 1) Link da base de dados histórica
+
+#url_base_dados = r"C:\Users\SIDNEI\Downloads\Base_de_Dados_FootyStats.csv"
+#Base_de_Dados_FlashScore = pd.read_csv(url_base_dados)
+Base_de_Dados_FlashScore = Base_de_Dados_FlashScore[Base_de_Dados_FlashScore['League'].isin(leagues)]
+
+# 2) Colunas a selecionar da base de dados
+colunas_historicas = ['Date','League','Home','Away','Goals_H_FT','Goals_A_FT',
+                      'Odd_H_FT','Odd_D_FT','Odd_A_FT',
+                      #'Odd_Over25_FT', 'Odd_Under25_FT',
+                      #'Odd_BTTS_Yes', 'Odd_BTTS_No',
+                     ]
+
+df_historico_original = Base_de_Dados_FlashScore[colunas_historicas].copy()
+
+# Filtrar apenas colunas com odd diferente de zero
+columns_to_filter = ['Odd_H_FT', 'Odd_D_FT', 'Odd_A_FT',
+                     # 'Odd_DC_1X', 'Odd_DC_12', 'Odd_DC_X2',
+                     # 'Odd_Over15_FT', 'Odd_Under15_FT',
+                     # 'Odd_Over25_FT', 'Odd_Under25_FT',
+                     # 'Odd_BTTS_Yes', 'Odd_BTTS_No',
+]
+
+df_historico_original = df_historico_original[(df_historico_original[columns_to_filter] != 0).all(axis=1)]
+df_historico_original = drop_reset_index(df_historico_original)
+
+df_historico_original['Date'] = pd.to_datetime(df_historico_original['Date'])
+df_historico_original = df_historico_original.sort_values(by='Date').reset_index(drop=True)
+
+# ========== FUNÇÃO PARA CALCULAR VARIÁVEIS ==========
+# 3) Variáveis a criar (média, desvio padrão, cv e eficiência)
+def calcular_variaveis(df, n_per, shift_val=1):       # Modifique o shift_val por shift_val=0 ou shift_val=1
+    df_temp = df.copy()
+
+    # Probabilidades
+    df_temp['p_H'] = 1 / df_temp['Odd_H_FT']
+    df_temp['p_D'] = 1 / df_temp['Odd_D_FT']
+    df_temp['p_A'] = 1 / df_temp['Odd_A_FT']
+
+    # Pontos
+    df_temp['PT_H'] = np.where(df_temp['Goals_H_FT'] > df_temp['Goals_A_FT'], 3,
+                                np.where(df_temp['Goals_H_FT'] == df_temp['Goals_A_FT'], 1, 0))
+    df_temp['PT_A'] = np.where(df_temp['Goals_H_FT'] > df_temp['Goals_A_FT'], 0,
+                                np.where(df_temp['Goals_H_FT'] == df_temp['Goals_A_FT'], 1, 3))
+
+    for team_type in ['Home', 'Away']:
+        prefix = 'H' if team_type == 'Home' else 'A'
+        opponent_prefix = 'A' if team_type == 'Home' else 'H'
+
+        min_periods_val = 1
+
+        # Pontos
+        df_temp[f'Media_PT_{prefix}_{n_per}'] = df_temp.groupby(team_type)[f'PT_{prefix}'].rolling(window=n_per, min_periods=min_periods_val).mean().shift(shift_val).reset_index(0, drop=True)
+        df_temp[f'DesvPad_PT_{prefix}_{n_per}'] = df_temp.groupby(team_type)[f'PT_{prefix}'].rolling(window=n_per, min_periods=min_periods_val).std().shift(shift_val).reset_index(0, drop=True)
+        df_temp[f'CV_PT_{prefix}_{n_per}'] = df_temp[f'DesvPad_PT_{prefix}_{n_per}'] / df_temp[f'Media_PT_{prefix}_{n_per}']
+        df_temp[f'Efi_PT_{prefix}_{n_per}'] = df_temp[f'Media_PT_{prefix}_{n_per}'] / df_temp[f'CV_PT_{prefix}_{n_per}']
+
+        # Gols Marcados
+        df_temp[f'Media_GM_{prefix}_{n_per}'] = df_temp.groupby(team_type)[f'Goals_{prefix}_FT'].rolling(window=n_per, min_periods=min_periods_val).mean().shift(shift_val).reset_index(0, drop=True)
+        df_temp[f'DesvPad_GM_{prefix}_{n_per}'] = df_temp.groupby(team_type)[f'Goals_{prefix}_FT'].rolling(window=n_per, min_periods=min_periods_val).std().shift(shift_val).reset_index(0, drop=True)
+        df_temp[f'CV_GM_{prefix}_{n_per}'] = df_temp[f'DesvPad_GM_{prefix}_{n_per}'] / df_temp[f'Media_GM_{prefix}_{n_per}']
+        df_temp[f'Efi_GM_{prefix}_{n_per}'] = df_temp[f'Media_GM_{prefix}_{n_per}'] / df_temp[f'CV_GM_{prefix}_{n_per}']
+
+        # Gols Sofridos
+        df_temp[f'Media_GS_{prefix}_{n_per}'] = df_temp.groupby(team_type)[f'Goals_{opponent_prefix}_FT'].rolling(window=n_per, min_periods=min_periods_val).mean().shift(shift_val).reset_index(0, drop=True)
+        df_temp[f'DesvPad_GS_{prefix}_{n_per}'] = df_temp.groupby(team_type)[f'Goals_{opponent_prefix}_FT'].rolling(window=n_per, min_periods=min_periods_val).std().shift(shift_val).reset_index(0, drop=True)
+        df_temp[f'CV_GS_{prefix}_{n_per}'] = df_temp[f'DesvPad_GS_{prefix}_{n_per}'] / df_temp[f'Media_GS_{prefix}_{n_per}']
+        df_temp[f'Efi_GS_{prefix}_{n_per}'] = df_temp[f'Media_GS_{prefix}_{n_per}'] / df_temp[f'CV_GS_{prefix}_{n_per}']
+
+        # Saldo de Gols
+        df_temp[f'SG_{prefix}'] = df_temp[f'Goals_{prefix}_FT'] - df_temp[f'Goals_{opponent_prefix}_FT']
+        df_temp[f'Media_SG_{prefix}_{n_per}'] = df_temp.groupby(team_type)[f'SG_{prefix}'].rolling(window=n_per, min_periods=min_periods_val).mean().shift(shift_val).reset_index(0, drop=True)
+        df_temp[f'DesvPad_SG_{prefix}_{n_per}'] = df_temp.groupby(team_type)[f'SG_{prefix}'].rolling(window=n_per, min_periods=min_periods_val).std().shift(shift_val).reset_index(0, drop=True)
+        df_temp[f'CV_SG_{prefix}_{n_per}'] = df_temp[f'DesvPad_SG_{prefix}_{n_per}'] / df_temp[f'Media_SG_{prefix}_{n_per}']
+        df_temp[f'Efi_SG_{prefix}_{n_per}'] = df_temp[f'Media_SG_{prefix}_{n_per}'] / df_temp[f'CV_SG_{prefix}_{n_per}']
+
+    # Substituir infinitos (inf e -inf) por 0
+    df_temp = df_temp.replace([np.inf, -np.inf], 0)
+
+    return df_temp
+
+# ========== PROCESSAMENTO DOS DADOS HISTÓRICOS ==========
+# 4) Filtrar a base histórica para jogos até o dia anterior ao dia_analise
+# df_historico_filtrado = df_historico_original[df_historico_original['Date'] < pd.to_datetime(dia_analise)].copy()
+df_historico_filtrado = df_historico_original
+df_historico_final = df_historico_filtrado.copy()
+dataframes_calculados = {}
+
+for n_per in PERIODOS_ANALISE:
+    print(f"Calculando variáveis para a base histórica com n_per = {n_per} e shift_val = 1...")
+    df_temp = calcular_variaveis(df_historico_filtrado, n_per=n_per, shift_val=1)       # Modifique o shift_val por shift_val=0 ou shift_val=1
+    dataframes_calculados[n_per] = df_temp
+
+    # Fazer merge das variáveis calculadas
+    colunas_variaveis = df_temp.filter(regex=rf'(Media|DesvPad|CV|Efi)_.*_[HA]_{n_per}$').columns
+    df_historico_final = df_historico_final.merge(
+        df_temp[colunas_variaveis],
+        left_index=True, right_index=True, how='left'
+    )
+
+# Remover colunas temporárias usadas para cálculo
+colunas_para_remover = df_historico_final.filter(regex=r'^(p_|PT_|GM_|GS_|SG_|VG_|CG_|CSG_)[HA]$').columns
+df_historico_final = df_historico_final.drop(columns=colunas_para_remover)
+
+# Pega a última informação de cada time na base de dados histórica filtrada
+last_data_home = df_historico_final.groupby('Home').tail(1).set_index('Home')
+last_data_away = df_historico_final.groupby('Away').tail(1).set_index('Away')
+
+# ========== PROCESSAMENTO DOS JOGOS DO DIA ==========
+# 5) Link dos jogos do dia selecionado
+
+#url_jogos_dia = r"C:\Users\SIDNEI\Downloads\Jogos_do_Dia_FootyStats_2026-01-16.csv"
+
+try:
+    #Jogos_do_Dia_FlashScore = pd.read_csv(url_jogos_dia)
+    Jogos_do_Dia_FlashScore = Jogos_do_Dia_FlashScore[Jogos_do_Dia_FlashScore['League'].isin(leagues)]
+    Jogos_do_Dia_FlashScore = drop_reset_index(Jogos_do_Dia_FlashScore)
+
+    # 6) Colunas a selecionar dos jogos do dia
+    colunas_jogos_dia = ['Date','Time','League','Home','Away','Odd_H_FT','Odd_D_FT','Odd_A_FT',
+                         #'Odd_Over25_FT', 'Odd_Under25_FT',
+                         #'Odd_BTTS_Yes', 'Odd_BTTS_No'
+                  ]
+
+    df_jogos_dia = Jogos_do_Dia_FlashScore[colunas_jogos_dia].copy()
+
+    # Adicionar as variáveis calculadas aos jogos do dia
+    df_jogos_dia_final = df_jogos_dia.copy()
+
+    # Usar apenas os períodos configurados
+    for n_per_val in PERIODOS_ANALISE:
+        for var_type in ['PT', 'GM', 'GS', 'SG']:
+            for stat_type in ['Media', 'DesvPad', 'CV', 'Efi']:
+                # Para o time da casa
+                col_home_historico = f'{stat_type}_{var_type}_H_{n_per_val}'
+                if col_home_historico in last_data_home.columns:
+                    df_jogos_dia_final = df_jogos_dia_final.merge(
+                        last_data_home[[col_home_historico]],
+                        left_on='Home',
+                        right_index=True,
+                        how='left',
+                        suffixes=('', f'_{col_home_historico}')
+                    ).rename(columns={col_home_historico: col_home_historico})
+
+                # Para o time visitante
+                col_away_historico = f'{stat_type}_{var_type}_A_{n_per_val}'
+                if col_away_historico in last_data_away.columns:
+                    df_jogos_dia_final = df_jogos_dia_final.merge(
+                        last_data_away[[col_away_historico]],
+                        left_on='Away',
+                        right_index=True,
+                        how='left',
+                        suffixes=('', f'_{col_away_historico}')
+                    ).rename(columns={col_away_historico: col_away_historico})
+
+
+
+except Exception as e:
+    print(f"Não foi possível carregar os jogos do dia . Erro")
+
+print(f"\nBase de Dados Histórica com as variáveis calculadas:")
+df_historico_final = drop_reset_index(df_historico_final)
+
+
+df = df_historico_final
+# #################################################################################
+# # Criando Targets e Calculando Profit
+# ##################################################################################
+
+# ================== Target e Profit Back =====================
+df['Back_Home'] = np.where((df['Goals_H_FT'] > df['Goals_A_FT']), 1, 0)
+df['Back_Home_Profit'] = np.where((df['Back_Home'] == 1), df['Odd_H_FT']-1, -1)
+
+df['Back_Draw'] = np.where((df['Goals_H_FT'] == df['Goals_A_FT']), 1, 0)
+df['Back_Draw_Profit'] = np.where((df['Back_Draw'] == 1), df['Odd_D_FT']-1, -1)
+
+df['Back_Away'] = np.where((df['Goals_H_FT'] < df['Goals_A_FT']), 1, 0)
+df['Back_Away_Profit'] = np.where((df['Back_Away'] == 1), df['Odd_A_FT']-1, -1)
+
+# ####################################################################################
+
+# ================== Target e Profit Zebra =====================
+df['Zebra_Home'] = np.where(((df['Goals_H_FT'] > df['Goals_A_FT']) & (df['Odd_H_FT'] > df['Odd_A_FT'])), 1, 0)
+df['Zebra_Home_Profit'] = np.where((df['Zebra_Home'] == 1), df['Odd_H_FT']-1, -1)
+
+df['Zebra_Away'] = np.where(((df['Goals_A_FT'] > df['Goals_H_FT']) & (df['Odd_A_FT'] > df['Odd_H_FT'])), 1, 0)
+df['Zebra_Away_Profit'] = np.where((df['Zebra_Away'] == 1), df['Odd_A_FT']-1, -1)
+
+# ####################################################################################
+
+# # ================== Target e Profit Dupla Chance DC =====================
+# df['DC_1X'] = np.where((df['Goals_H_FT'] >= df['Goals_A_FT']), 1, 0)
+# df['DC_1X_Profit'] = np.where((df['DC_1X'] == 1), df['Odd_DC_1X']-1, -1)
+
+# df['DC_12'] = np.where((df['Goals_H_FT'] != df['Goals_A_FT']), 1, 0)
+# df['DC_12_Profit'] = np.where((df['DC_12'] == 1), df['Odd_DC_12']-1, -1)
+
+# df['DC_2X'] = np.where((df['Goals_H_FT'] <= df['Goals_A_FT']), 1, 0)
+# df['DC_2X_Profit'] = np.where((df['DC_2X'] == 1), df['Odd_DC_X2']-1, -1)
+
+# # #####################################################################################
+
+# # ================== Target e Profit Over e Under 1.5 =====================
+# df['Over_15'] = np.where(((df['Goals_H_FT'] + df['Goals_A_FT']) > 1), 1, 0)
+# df['Over_15_Profit'] = np.where((df['Over_15'] == 1), df['Odd_Over15_FT']-1, -1)
+
+# df['Under_15'] = np.where(((df['Goals_H_FT'] + df['Goals_A_FT']) < 2), 1, 0)
+# df['Under_15_Profit'] = np.where((df['Under_15'] == 1), df['Odd_Under15_FT']-1, -1)
+
+# # #####################################################################################
+
+# ================== Target e Profit Over e Under 2.5 =====================
+#df['Over_25'] = np.where(((df['Goals_H_FT'] + df['Goals_A_FT']) > 2), 1, 0)
+#df['Over_25_Profit'] = np.where((df['Over_25'] == 1), df['Odd_Over25_FT']-1, -1)
+
+#df['Under_25'] = np.where(((df['Goals_H_FT'] + df['Goals_A_FT']) < 3), 1, 0)
+#df['Under_25_Profit'] = np.where((df['Under_25'] == 1), df['Odd_Under25_FT']-1, -1)
+
+# # #####################################################################################
+
+# # ================== Target e Profit Over e Under 3.5 =====================
+# df['Over_35'] = np.where(((df['Goals_H_FT'] + df['Goals_A_FT']) > 3), 1, 0)
+# df['Over_35_Profit'] = np.where((df['Over_35'] == 1), df['Odd_Over35_FT']-1, -1)
+
+# df['Under_35'] = np.where(((df['Goals_H_FT'] + df['Goals_A_FT']) < 4), 1, 0)
+# df['Under_35_Profit'] = np.where((df['Under_35'] == 1), df['Odd_Under35_FT']-1, -1)
+
+# # ######################################################################################
+
+# ================== Target e Profit BTTS SIM e NÃO =====================
+#df['BTTS_Yes'] = np.where(((df['Goals_H_FT'] > 0) & (df['Goals_A_FT'] > 0)), 1, 0)
+#df['BTTS_Yes_Profit'] = np.where((df['BTTS_Yes'] == 1), df['Odd_BTTS_Yes']-1, -1)
+
+#df['BTTS_No'] = np.where(((df['Goals_H_FT'] == 0) | (df['Goals_A_FT'] == 0)), 1, 0)
+#df['BTTS_No_Profit'] = np.where((df['BTTS_No'] == 1), df['Odd_BTTS_No']-1, -1)
+
+# #####################################################################################
+df_historico_final = df
+df_historico_final = drop_reset_index(df_historico_final)
+
+print("Targets e Profits criados")
+
+
+# ##############################################################
+display(df_historico_final)
+
+print(f"\nJogos do Dia com as variáveis calculadas:")
+display(df_jogos_dia_final)
+
+# ======================================================================
+
 ATUALIZAR = st.button("🚀 Atualizar Dados")
 
 @st.cache_data
@@ -516,3 +1000,4 @@ if ATUALIZAR:
 # url_base_dados = r"C:\Users\SIDNEI\Desktop\Meus Projectos Jupyter\Pycaret nas apostas\Testando_novo_versao_treino_previsao\Meu_APP_V1\Base_de_Dados_Teste_com_Variaveis.csv"
 
 # base_dados = pd.read_csv(url_base_dados)
+
