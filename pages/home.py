@@ -62,7 +62,7 @@ ligas = [
 ]
 
 # quantidade de temporadas desejadas
-quantidade_temporadas = 12
+quantidade_temporadas = 3
 
 base_url = "https://www.football-data.co.uk/mmz4281"
 
@@ -1000,5 +1000,6 @@ if ATUALIZAR:
 # url_base_dados = r"C:\Users\SIDNEI\Desktop\Meus Projectos Jupyter\Pycaret nas apostas\Testando_novo_versao_treino_previsao\Meu_APP_V1\Base_de_Dados_Teste_com_Variaveis.csv"
 
 # base_dados = pd.read_csv(url_base_dados)
+
 
 
