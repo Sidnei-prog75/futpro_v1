@@ -558,9 +558,9 @@ jogos_do_dia = df_jogos_dia_final
 base = df_historico_final
 # ==========================================================
 # garantir que Data é datetime
-df = jogos_do_dia
+# df = jogos_do_dia
 # df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-df = converter_data(df)
+# df = converter_data(df)
 
 # data mais recente da base
 # data_mais_recente = df["Date"].max()
@@ -569,9 +569,9 @@ df = converter_data(df)
 # st.write(f"Data de jogos do dia mais recente: {data_mais_recente} Total: {len(jogos_do_dia)} jogos")
 
 # -------------------------------------------------
-df_base = base
+# df_base = base
 # df_base["Date"] = pd.to_datetime(df_base["Date"], errors="coerce")
-df_base = converter_data(df_base)
+# df_base = converter_data(df_base)
 # data mais recente da base
 # data_mais_recente_base = df_base["Date"].max()
 # data_mais_recente_base = data_mais_recente_base.strftime("%d/%m/%Y")
@@ -585,31 +585,31 @@ if ATUALIZAR:
     # url_jogos_dia = r"C:\Users\SIDNEI\Desktop\meu_app_futebol\Base_de_Dados_Teste_com_Variaveis.csv"
    # Carregar jogos do dia
     # url_jogos_dia = r"C:\Users\SIDNEI\Desktop\meu_app_futebol\Jogos_do_Dia_Teste_com_Variaveis.csv"
-    jogos_do_dia = pd.read_csv(url_jogos_dia)
+    # jogos_do_dia = pd.read_csv(url_jogos_dia)
 
     # url_base_dados = r"C:\Users\SIDNEI\Desktop\meu_app_futebol\Base_de_Dados_Teste_com_Variaveis.csv"
-    base = pd.read_csv(url_base_dados)
+    # base = pd.read_csv(url_base_dados)
 
     # ==========================================================
     # garantir que Data é datetime
-    df = jogos_do_dia
-    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-    df = converter_data(df)
+    # df = jogos_do_dia
+    # df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    # df = converter_data(df)
 
-    # data mais recente da base
-    data_mais_recente = df["Date"].max()
-    data_mais_recente = data_mais_recente.strftime("%d/%m/%Y")
-    # st.write(f"Data de jogos do dia mais recente: {data_mais_recente.strftime("%d/%m/%Y")}")
-    st.write(f"Data de jogos do dia mais recente: {data_mais_recente} Total: {len(jogos_do_dia)} jogos")
+    # # data mais recente da base
+    # data_mais_recente = df["Date"].max()
+    # data_mais_recente = data_mais_recente.strftime("%d/%m/%Y")
+    # # st.write(f"Data de jogos do dia mais recente: {data_mais_recente.strftime("%d/%m/%Y")}")
+    # st.write(f"Data de jogos do dia mais recente: {data_mais_recente} Total: {len(jogos_do_dia)} jogos")
     
-    # -------------------------------------------------
-    df_base = base
-    df_base["Date"] = pd.to_datetime(df_base["Date"], errors="coerce")
-    df_base = converter_data(df_base)
-    # data mais recente da base
-    data_mais_recente_base = df_base["Date"].max()
-    data_mais_recente_base = data_mais_recente_base.strftime("%d/%m/%Y")
-    st.write(f"Base de Dados Ultima data: {data_mais_recente_base}")
+    # # -------------------------------------------------
+    # df_base = base
+    # df_base["Date"] = pd.to_datetime(df_base["Date"], errors="coerce")
+    # df_base = converter_data(df_base)
+    # # data mais recente da base
+    # data_mais_recente_base = df_base["Date"].max()
+    # data_mais_recente_base = data_mais_recente_base.strftime("%d/%m/%Y")
+    # st.write(f"Base de Dados Ultima data: {data_mais_recente_base}")
 
     # ======================================================
     # GERAR PREISÕES
@@ -1000,6 +1000,7 @@ if ATUALIZAR:
 # url_base_dados = r"C:\Users\SIDNEI\Desktop\Meus Projectos Jupyter\Pycaret nas apostas\Testando_novo_versao_treino_previsao\Meu_APP_V1\Base_de_Dados_Teste_com_Variaveis.csv"
 
 # base_dados = pd.read_csv(url_base_dados)
+
 
 
 
