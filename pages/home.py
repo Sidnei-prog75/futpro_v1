@@ -82,7 +82,7 @@ df = converter_data(df)
 
 # data mais recente da base
 data_mais_recente = df["Date"].max()
-# data_mais_recente = data_mais_recente.strftime("%d/%m/%Y")
+data_mais_recente = data_mais_recente.strftime("%d/%m/%Y")
 # # st.write(f"Data de jogos do dia mais recente: {data_mais_recente.strftime("%d/%m/%Y")}")
 st.write(f"Data de jogos do dia mais recente: {data_mais_recente} Total: {len(jogos_do_dia)} jogos")
 
@@ -92,7 +92,7 @@ df_base["Date"] = pd.to_datetime(df_base["Date"], errors="coerce")
 df_base = converter_data(df_base)
 # data mais recente da base
 data_mais_recente_base = df_base["Date"].max()
-# data_mais_recente_base = data_mais_recente_base.strftime("%d/%m/%Y")
+data_mais_recente_base = data_mais_recente_base.strftime("%d/%m/%Y")
 st.write(f"Base de Dados Ultima data: {data_mais_recente_base}")
 
 
@@ -518,6 +518,7 @@ if ATUALIZAR:
 # url_base_dados = r"C:\Users\SIDNEI\Desktop\Meus Projectos Jupyter\Pycaret nas apostas\Testando_novo_versao_treino_previsao\Meu_APP_V1\Base_de_Dados_Teste_com_Variaveis.csv"
 
 # base_dados = pd.read_csv(url_base_dados)
+
 
 
 
